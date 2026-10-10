@@ -1,0 +1,20 @@
+{
+  "id": "gds",
+  "version": "0.0.1-alpha.1",
+  "api_version": 1,
+  "kind": "gds",
+  "platforms": [
+    "linux",
+    "macos",
+    "windows"
+  ],
+  "capabilities": [
+    "read_device_state",
+    "read_module_health"
+  ],
+  "permissions": [
+    "read_only",
+    "process_execution"
+  ],
+  "dependencies": []
+}
