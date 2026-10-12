@@ -1,0 +1,42 @@
+schema_version: 1
+repository:
+  id: "repo_01M4R3MGQY75ADH9BD1W9RQX9D"
+  display_name: "nddev-device-sync-gds"
+  roles:
+    - "project"
+  lifecycle: "active"
+provider:
+  type: "github"
+  installation: "installation:github-opennetwork"
+  repository_id: 1412571640
+  owner: "NDDev-OpenNetwork"
+  name: "nddev-device-sync-gds"
+classification:
+  portfolios:
+    - "portfolio:nddev-opennetwork"
+  visibility_contract: "public"
+  data_classification: "public"
+product:
+  purpose: "AGPL-3.0-only NDS adapter. Reads GDS status for an explicitly selected repository; native classifications, unproven scope and unknown remote freshness stay visible with no ref refresh or Git mutation."
+  capabilities:
+    - "Read-only GDS status projection for a selected repository"
+    - "Explicit non-mutation boundary over Git and provider state"
+policy:
+  profiles:
+    - "repository-default"
+    - "opennetwork-default"
+  rollout_ring: "standard"
+git:
+  default_branch: "main"
+  integration: "pull-request"
+  branch_model: "task-branches"
+  handoff_pr: "preferred"
+  cleanup: "merged-only"
+agent:
+  context_profile: "project-default"
+  generated_agents: false
+  serena:
+    enabled: false
+    provenance_required: false
+release:
+  mode: "none"
