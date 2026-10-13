@@ -30,6 +30,15 @@ jobs:
         run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - name: Module tests and Linux Rust worker acceptance
         run: cargo test --locked --workspace
+      - name: Catalog profile controlled native negatives
+        run: |
+          cargo clippy --locked --all-targets --features github-catalog -- -D warnings
+          cargo test --locked --features github-catalog
+      - name: Catalog WASM code check (not browser runtime acceptance)
+        if: runner.os == 'Linux'
+        run: |
+          rustup target add wasm32-unknown-unknown --toolchain 1.99.0
+          cargo check --locked --lib --features github-catalog --target wasm32-unknown-unknown
       - name: Dependency policy and advisory checks
         if: runner.os == 'Linux'
         run: |
