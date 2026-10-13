@@ -30,7 +30,12 @@ fn git(root: &Path, args: &[&str]) -> String {
         .args(args)
         .output()
         .unwrap();
-    assert!(out.status.success());
+    assert!(
+        out.status.success(),
+        "fixture git {args:?} failed ({}): {}",
+        out.status,
+        String::from_utf8_lossy(&out.stderr)
+    );
     String::from_utf8(out.stdout).unwrap().trim().into()
 }
 fn fixture() -> tempfile::TempDir {
