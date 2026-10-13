@@ -60,15 +60,18 @@ impl Client {
                 .get("retry-after")
                 .and_then(|v| v.to_str().ok()),
         )?;
-        let link = response
-            .headers()
-            .get("link")
-            .map(|v| {
-                v.to_str()
-                    .map(str::to_owned)
-                    .map_err(|_| ModuleError::InvalidResponse)
-            })
-            .transpose()?;
+        let mut link = None;
+        for value in response.headers().get_all("link") {
+            let value = value.to_str().map_err(|_| ModuleError::InvalidResponse)?;
+            let joined = link.get_or_insert_with(String::new);
+            if !joined.is_empty() {
+                joined.push(',');
+            }
+            if joined.len().saturating_add(value.len()) > 8192 {
+                return Err(ModuleError::InvalidResponse);
+            }
+            joined.push_str(value);
+        }
         if response
             .content_length()
             .is_some_and(|len| len > MAX_BODY as u64)
@@ -242,6 +245,19 @@ mod tests {
             .await;
             assert_eq!(result.err(), Some(expected));
         }
+    }
+    #[tokio::test]
+    async fn repeated_link_fields_preserve_the_next_relation() {
+        let next = "https://api.github.com/user/repos?affiliation=owner,organization_member&visibility=all&sort=full_name&per_page=25&page=2";
+        let headers = format!(
+            "Link: <https://api.github.com/user/repos?page=9>; rel=last\r\nLink: <{next}>; rel=next\r\n"
+        );
+        let server = fixture(response(200, &headers, b"[]"), std::time::Duration::ZERO).await;
+        let reply = Client::fixture(server.origin.clone())
+            .get("generated_fixture_invalid", Route::Repositories(1))
+            .await
+            .unwrap();
+        assert_eq!(crate::github::next_page(reply.link.as_deref(), 1), Ok(true));
     }
     #[tokio::test]
     async fn decoded_gzip_limit_and_owned_cancel_deadline_are_real_io_negatives() {

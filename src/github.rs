@@ -17,6 +17,8 @@ mod platform;
 #[path = "github/browser.rs"]
 mod platform;
 
+mod link;
+
 const ORIGIN: &str = "https://api.github.com";
 const API_VERSION: &str = "2026-03-10";
 const MAX_BODY: usize = 1_048_576;
@@ -176,57 +178,40 @@ fn next_page(link: Option<&str>, current: u8) -> Result<bool, ModuleError> {
     if link.len() > 8192 {
         return Err(ModuleError::InvalidResponse);
     }
-    let mut found = false;
-    for part in link.split(", ") {
-        let Some((target, relation)) = part.split_once(';') else {
-            return Err(ModuleError::InvalidResponse);
-        };
-        if !relation
-            .split(';')
-            .any(|value| value.trim() == "rel=\"next\"")
-        {
-            continue;
-        }
-        if found {
-            return Err(ModuleError::InvalidResponse);
-        }
-        let target = target
-            .trim()
-            .strip_prefix('<')
-            .and_then(|v| v.strip_suffix('>'))
-            .ok_or(ModuleError::InvalidResponse)?;
-        let url = url::Url::parse(target).map_err(|_| ModuleError::InvalidResponse)?;
-        if url.origin().ascii_serialization() != ORIGIN
-            || url.path() != "/user/repos"
-            || !url.username().is_empty()
-            || url.password().is_some()
-            || url.fragment().is_some()
-        {
-            return Err(ModuleError::InvalidResponse);
-        }
-        let mut pairs = std::collections::BTreeMap::new();
-        for (key, value) in url.query_pairs() {
-            if pairs.insert(key, value).is_some() {
-                return Err(ModuleError::InvalidResponse);
-            }
-        }
-        if pairs.get("page").and_then(|n| n.parse::<u8>().ok()) != current.checked_add(1)
-            || pairs.get("per_page").map(|v| v.as_ref()) != Some("25")
-            || pairs.get("affiliation").map(|v| v.as_ref()) != Some("owner,organization_member")
-            || pairs.get("visibility").map(|v| v.as_ref()) != Some("all")
-            || pairs.get("sort").map(|v| v.as_ref()) != Some("full_name")
-            || pairs.keys().any(|k| {
-                !matches!(
-                    k.as_ref(),
-                    "page" | "per_page" | "affiliation" | "visibility" | "sort" | "direction"
-                )
-            })
-        {
-            return Err(ModuleError::InvalidResponse);
-        }
-        found = true;
+    let Some(target) = link::next_target(link)? else {
+        return Ok(false);
+    };
+    let url = url::Url::parse(target).map_err(|_| ModuleError::InvalidResponse)?;
+    if url.origin().ascii_serialization() != ORIGIN
+        || url.path() != "/user/repos"
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.fragment().is_some()
+    {
+        return Err(ModuleError::InvalidResponse);
     }
-    Ok(found)
+    let mut pairs = std::collections::BTreeMap::new();
+    for (key, value) in url.query_pairs() {
+        if pairs.insert(key, value).is_some() {
+            return Err(ModuleError::InvalidResponse);
+        }
+    }
+    if pairs.get("page").and_then(|n| n.parse::<u8>().ok()) != current.checked_add(1)
+        || pairs.get("per_page").map(|v| v.as_ref()) != Some("25")
+        || pairs.get("affiliation").map(|v| v.as_ref()) != Some("owner,organization_member")
+        || pairs.get("visibility").map(|v| v.as_ref()) != Some("all")
+        || pairs.get("sort").map(|v| v.as_ref()) != Some("full_name")
+        || pairs.get("direction").is_some_and(|value| value != "asc")
+        || pairs.keys().any(|k| {
+            !matches!(
+                k.as_ref(),
+                "page" | "per_page" | "affiliation" | "visibility" | "sort" | "direction"
+            )
+        })
+    {
+        return Err(ModuleError::InvalidResponse);
+    }
+    Ok(true)
 }
 
 #[derive(Deserialize)]
@@ -324,5 +309,62 @@ mod tests {
         assert_eq!(status(401, None, None), Err(ModuleError::Unavailable));
         assert_eq!(status(403, Some("0"), None), Err(ModuleError::Busy));
         assert_eq!(status(302, None, None), Err(ModuleError::InvalidResponse));
+    }
+    #[test]
+    fn link_continuation_handles_uri_commas_and_relation_forms_without_false_eof() {
+        let next = "https://api.github.com/user/repos?affiliation=owner,organization_member&visibility=all&sort=full_name&per_page=25&page=2";
+        for relation in [
+            "rel=next",
+            "rel=\"next\"",
+            "REL=\"last NEXT\"",
+            "rel=\"next last\"",
+        ] {
+            let header = format!(
+                "<https://api.github.com/user/repos?page=8>; rel=last,<{next}>; {relation}"
+            );
+            assert_eq!(next_page(Some(&header), 1), Ok(true));
+        }
+        assert_eq!(
+            next_page(
+                Some(&format!(
+                    "<{next}>; title=\"text, \\\"quoted\\\"\"; rel=next"
+                )),
+                1
+            ),
+            Ok(true)
+        );
+        for header in [
+            format!("<{next}>; rel=next,<{next}>; rel=next"),
+            format!("<{next}>; rel=\"next next\""),
+            format!("<{next}>; rel=last; rel=next"),
+            format!("<{next}>; rel=\"next"),
+            format!("<{next}>; rel=next,"),
+            format!("<{next}>; title=unknown"),
+            format!("<{next}>; rel=next; anchor=\"other\""),
+            "not a Link value".into(),
+        ] {
+            assert!(matches!(
+                next_page(Some(&header), 1),
+                Err(ModuleError::InvalidResponse)
+            ));
+        }
+        assert_eq!(
+            next_page(Some(&format!("<{next}>; rel=last")), 1),
+            Ok(false)
+        );
+        assert_eq!(
+            next_page(Some(&format!("<{next}&direction=asc>; rel=next")), 1),
+            Ok(true)
+        );
+        for direction in ["desc", "", "ASC"] {
+            assert!(
+                next_page(
+                    Some(&format!("<{next}&direction={direction}>; rel=next")),
+                    1
+                )
+                .is_err()
+            );
+        }
+        assert!(next_page(Some(&format!("<{next}&page=2>; rel=next")), 1).is_err());
     }
 }
