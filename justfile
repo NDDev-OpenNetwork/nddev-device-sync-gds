@@ -7,3 +7,10 @@ check:
 
 provider-check:
     cargo test --locked --test provider --test isolation
+
+catalog-check:
+    cargo clippy --locked --all-targets --features github-catalog -- -D warnings
+    cargo test --locked --features github-catalog
+
+github-negative-check:
+    cargo test --locked --features github-catalog --test github_provider -- --ignored
