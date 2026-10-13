@@ -5,8 +5,7 @@
   "kind": "gds",
   "platforms": [
     "linux",
-    "macos",
-    "windows"
+    "macos"
   ],
   "capabilities": [
     "read_device_state",

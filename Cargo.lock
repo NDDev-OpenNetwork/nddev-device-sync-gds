@@ -317,6 +317,7 @@ version = "0.0.1-alpha.1"
 dependencies = [
  "nddev-device-sync-adapter-io",
  "serde",
+ "serde_json",
  "tempfile",
  "tokio",
 ]
