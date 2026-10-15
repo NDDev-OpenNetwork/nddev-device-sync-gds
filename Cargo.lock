@@ -1507,18 +1507,6 @@ checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
 
 [[package]]
 name = "gloo-timers"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbb143cf96099802033e0d4f4963b19fd2e0b728bcf076cd9cf7f6634f092994"
-dependencies = [
- "futures-channel",
- "futures-core",
- "js-sys",
- "wasm-bindgen",
-]
-
-[[package]]
-name = "gloo-timers"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "482ce8a491a501da4cd806bd190275363d674f2845005c6ddbd5d3e1dd54495d"
@@ -2179,7 +2167,7 @@ version = "0.0.1-alpha.6"
 dependencies = [
  "flate2",
  "gix",
- "gloo-timers 0.4.0",
+ "gloo-timers",
  "js-sys",
  "nddev-device-sync-adapter-io",
  "nddev-device-sync-application",
@@ -2206,12 +2194,12 @@ dependencies = [
 [[package]]
 name = "nddev-device-sync-telemetry"
 version = "0.0.1-alpha.11"
-source = "git+https://github.com/NDDev-Technocracy-OpenNetwork-NDS/nddev-device-sync-observability?rev=38f48cf88fb2222d2ccde22460a8f2f564f8e47b#38f48cf88fb2222d2ccde22460a8f2f564f8e47b"
+source = "git+https://github.com/NDDev-Technocracy-OpenNetwork-NDS/nddev-device-sync-observability?rev=40f1f799a395f67e7a565e9c0c9f4b5ba7fdbe67#40f1f799a395f67e7a565e9c0c9f4b5ba7fdbe67"
 dependencies = [
  "android_log-sys",
  "chrono",
  "futures",
- "gloo-timers 0.3.0",
+ "gloo-timers",
  "js-sys",
  "jsonschema",
  "opentelemetry",
