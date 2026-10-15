@@ -122,6 +122,20 @@ async fn submodule_partial_read_cannot_produce_complete_parent_status() {
     git(source.path(), &["add", "-A"]);
     git(source.path(), &["commit", "-qm", "rename source"]);
     let parent = fixture();
+    std::fs::create_dir(parent.path().join(".git/modules")).unwrap();
+    // Use Git's transport instead of the local loose-object copy optimization.
+    // Keep the same separate gitdir and real submodule consumed by the reader.
+    git(
+        parent.path(),
+        &[
+            "clone",
+            "--no-local",
+            "--separate-git-dir",
+            ".git/modules/logical-name",
+            source.path().to_str().unwrap(),
+            "vendor/dependency",
+        ],
+    );
     git(
         parent.path(),
         &[
@@ -137,6 +151,17 @@ async fn submodule_partial_read_cannot_produce_complete_parent_status() {
     );
     git(parent.path(), &["commit", "-qam", "submodule"]);
     let child = parent.path().join("vendor/dependency");
+    assert!(child.join(".git").is_file());
+    let git_dir = PathBuf::from(git(&child, &["rev-parse", "--absolute-git-dir"]));
+    assert_eq!(
+        git_dir.canonicalize().unwrap(),
+        parent
+            .path()
+            .join(".git/modules/logical-name")
+            .canonicalize()
+            .unwrap()
+    );
+    assert!(!git_dir.join("objects/info/alternates").exists());
     for i in 0..201 {
         std::fs::remove_file(child.join(format!("old-{i}"))).unwrap();
         std::fs::write(
