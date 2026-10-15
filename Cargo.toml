@@ -20,12 +20,12 @@ tokio = { version = "1.53", features = ["macros"], optional = true }
 tokio-util = { version = "0.7", features = ["rt"], optional = true }
 tracing = { version = "0.1", optional = true }
 url = { version = "2.5", optional = true }
-nddev-device-sync-telemetry = { version = "=0.0.1-alpha.11", git = "https://github.com/NDDev-Technocracy-OpenNetwork-NDS/nddev-device-sync-observability", rev = "38f48cf88fb2222d2ccde22460a8f2f564f8e47b", optional = true }
-nddev-device-sync-domain = { version = "=0.0.12", git = "https://github.com/NDDev-OpenNetwork/nddev-device-sync-core.git", rev = "19ceef8a233b68ace3b18ebeb852633ed26d208c" }
-nddev-device-sync-application = { version = "=0.0.1-alpha.21", git = "https://github.com/NDDev-OpenNetwork/nddev-device-sync-core.git", rev = "19ceef8a233b68ace3b18ebeb852633ed26d208c" }
+nddev-device-sync-telemetry = { version = "=0.0.1-alpha.11", git = "https://github.com/NDDev-Technocracy-OpenNetwork-NDS/nddev-device-sync-observability", rev = "40f1f799a395f67e7a565e9c0c9f4b5ba7fdbe67", optional = true }
+nddev-device-sync-domain = { version = "=0.0.12", git = "https://github.com/NDDev-Technocracy-OpenNetwork-NDS/nddev-device-sync-core.git", rev = "889f0f4a9b6416e92eaaac111471a9d700ef8468" }
+nddev-device-sync-application = { version = "=0.0.1-alpha.21", git = "https://github.com/NDDev-Technocracy-OpenNetwork-NDS/nddev-device-sync-core.git", rev = "889f0f4a9b6416e92eaaac111471a9d700ef8468" }
 
 [target.'cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))'.dependencies]
-nddev-device-sync-adapter-io = { version = "=0.0.1-alpha.1", git = "https://github.com/NDDev-OpenNetwork/nddev-device-sync-agent", rev = "341644980976a08825b194f147b7534321325785" }
+nddev-device-sync-adapter-io = { version = "=0.0.1-alpha.4", git = "https://github.com/NDDev-Technocracy-OpenNetwork-NDS/nddev-device-sync-agent", rev = "fba131111837ce1fe6c82ce6df9e3d19420f62e7" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 reqwest = { version = "0.13.3", default-features = false, features = ["rustls-no-provider", "gzip"], optional = true }
@@ -36,11 +36,11 @@ tokio = { version = "1.53", features = ["time"], optional = true }
 wasm-bindgen = { version = "=0.2.129", optional = true }
 wasm-bindgen-futures = { version = "=0.4.79", optional = true }
 js-sys = { version = "=0.3.106", optional = true }
-gloo-timers = { version = "0.3", features = ["futures"], optional = true }
+gloo-timers = { version = "0.4", features = ["futures"], optional = true }
 web-sys = { version = "=0.3.106", features = ["Window", "Request", "RequestInit", "RequestMode", "RequestCredentials", "RequestRedirect", "RequestCache", "ReferrerPolicy", "Headers", "Response", "AbortController", "AbortSignal", "ReadableStream", "ReadableStreamDefaultReader"], optional = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-gix = { version = "=0.88.0", default-features = false, features = ["status", "revision", "sha1"] }
+gix = { version = "=0.89.0", default-features = false, features = ["status", "revision", "sha1"] }
 rustix = { version = "1.1", features = ["process"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
